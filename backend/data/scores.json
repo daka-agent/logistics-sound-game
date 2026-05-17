@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1779016345784,
+    "userId": "user_1779015823667_9q7csdw8o",
+    "nickname": "小卡",
+    "score": 20,
+    "correctRate": 0.2222222222222222,
+    "timeUsed": 521,
+    "createdAt": "2026-05-17T11:12:25.784Z"
+  },
+  {
+    "id": 1779019560546,
+    "userId": "user_1779015823667_9q7csdw8o",
+    "nickname": "小卡",
+    "score": 40,
+    "correctRate": 0.4444444444444444,
+    "timeUsed": 223,
+    "createdAt": "2026-05-17T12:06:00.546Z"
+  }
+]

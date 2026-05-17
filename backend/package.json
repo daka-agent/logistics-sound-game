@@ -1,0 +1,23 @@
+{
+  "name": "logistics-sound-game-backend",
+  "version": "1.0.0",
+  "description": "物流声音猜题游戏后端API服务",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "init-db": "node src/database/init.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^7.1.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

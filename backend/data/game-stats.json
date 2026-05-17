@@ -1,0 +1,21 @@
+{
+  "totalGames": 2,
+  "records": [
+    {
+      "userId": "user_1779015823667_9q7csdw8o",
+      "score": 20,
+      "correctRate": 0.2222222222222222,
+      "timeUsed": 521,
+      "completed": true,
+      "createdAt": "2026-05-17T11:12:25.748Z"
+    },
+    {
+      "userId": "user_1779015823667_9q7csdw8o",
+      "score": 40,
+      "correctRate": 0.4444444444444444,
+      "timeUsed": 223,
+      "completed": true,
+      "createdAt": "2026-05-17T12:06:00.474Z"
+    }
+  ]
+}
