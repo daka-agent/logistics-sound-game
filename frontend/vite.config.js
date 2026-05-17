@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [vue()],
+  base: '/logistics-sound-game/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src')
