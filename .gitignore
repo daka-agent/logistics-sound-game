@@ -8,10 +8,11 @@ dist/
 build/
 *.log
 
-# Database
+# Database & Data
 *.db
 *.db-shm
 *.db-wal
+backend/data/*.json
 
 # Logs
 logs/
@@ -48,3 +49,6 @@ Thumbs.db
 # Misc
 *.bak
 *.backup
+
+# Test
+.nyc_output/

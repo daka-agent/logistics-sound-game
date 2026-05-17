@@ -64,25 +64,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '@/stores/gameStore';
 import { useUserStore } from '@/stores/userStore';
 import leaderboardApi from '@/api/leaderboard';
 import statsApi from '@/api/stats';
+import { formatTime } from '@/utils';
 
 const router = useRouter();
 const gameStore = useGameStore();
 const userStore = useUserStore();
+const toast = inject('toast');
 
 const leaderboard = ref([]);
 const isNewRecord = ref(false);
-
-function formatTime(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
 
 async function submitScore() {
   try {
@@ -118,17 +114,17 @@ function playAgain() {
 }
 
 function shareResult() {
-  const text = `我在物流声音猜题获得${gameStore.score}分，正确率${Math.round(gameStore.correctRate * 100)}%！快来挑战吧！`;
+  const text = `我在物流之声获得${gameStore.score}分，正确率${Math.round(gameStore.correctRate * 100)}%！快来挑战吧！`;
   
   if (navigator.share) {
     navigator.share({
-      title: '物流声音猜题',
+      title: '物流之声',
       text: text,
       url: window.location.origin
     });
   } else {
     navigator.clipboard.writeText(text).then(() => {
-      alert('成绩已复制到剪贴板！');
+      toast.value?.success('成绩已复制到剪贴板！');
     });
   }
 }

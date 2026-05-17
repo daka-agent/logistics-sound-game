@@ -1,18 +1,36 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 
 const dataDir = path.join(__dirname, '../../data');
 const scoresFile = path.join(dataDir, 'scores.json');
 const statsFile = path.join(dataDir, 'game-stats.json');
 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+if (!require('fs').existsSync(dataDir)) {
+  require('fs').mkdirSync(dataDir, { recursive: true });
 }
 
-function readScores() {
+let scoresCache = null;
+let statsCache = null;
+let scoresCacheTime = 0;
+let statsCacheTime = 0;
+const CACHE_TTL = 30000;
+
+let scoresWriteLock = false;
+let statsWriteLock = false;
+
+async function readScores() {
+  const now = Date.now();
+  if (scoresCache && (now - scoresCacheTime) < CACHE_TTL) {
+    return scoresCache;
+  }
+  
   try {
-    if (fs.existsSync(scoresFile)) {
-      return JSON.parse(fs.readFileSync(scoresFile, 'utf8'));
+    const fsSync = require('fs');
+    if (fsSync.existsSync(scoresFile)) {
+      const data = await fs.readFile(scoresFile, 'utf8');
+      scoresCache = JSON.parse(data);
+      scoresCacheTime = now;
+      return scoresCache;
     }
   } catch (error) {
     console.error('读取scores失败:', error);
@@ -20,14 +38,37 @@ function readScores() {
   return [];
 }
 
-function writeScores(scores) {
-  fs.writeFileSync(scoresFile, JSON.stringify(scores, null, 2));
+async function writeScores(scores) {
+  while (scoresWriteLock) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  
+  scoresWriteLock = true;
+  try {
+    await fs.writeFile(scoresFile, JSON.stringify(scores, null, 2));
+    scoresCache = scores;
+    scoresCacheTime = Date.now();
+  } catch (error) {
+    console.error('写入scores失败:', error);
+    throw error;
+  } finally {
+    scoresWriteLock = false;
+  }
 }
 
-function readStats() {
+async function readStats() {
+  const now = Date.now();
+  if (statsCache && (now - statsCacheTime) < CACHE_TTL) {
+    return statsCache;
+  }
+  
   try {
-    if (fs.existsSync(statsFile)) {
-      return JSON.parse(fs.readFileSync(statsFile, 'utf8'));
+    const fsSync = require('fs');
+    if (fsSync.existsSync(statsFile)) {
+      const data = await fs.readFile(statsFile, 'utf8');
+      statsCache = JSON.parse(data);
+      statsCacheTime = now;
+      return statsCache;
     }
   } catch (error) {
     console.error('读取stats失败:', error);
@@ -35,16 +76,31 @@ function readStats() {
   return { totalGames: 0, records: [] };
 }
 
-function writeStats(stats) {
-  fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2));
+async function writeStats(stats) {
+  while (statsWriteLock) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  
+  statsWriteLock = true;
+  try {
+    await fs.writeFile(statsFile, JSON.stringify(stats, null, 2));
+    statsCache = stats;
+    statsCacheTime = Date.now();
+  } catch (error) {
+    console.error('写入stats失败:', error);
+    throw error;
+  } finally {
+    statsWriteLock = false;
+  }
 }
 
 class LeaderboardService {
-  submitScore(userId, nickname, score, correctRate, timeUsed) {
-    const scores = readScores();
+  async submitScore(userId, nickname, score, correctRate, timeUsed) {
+    const scores = await readScores();
     
+    const recordId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     scores.push({
-      id: Date.now(),
+      id: recordId,
       userId,
       nickname,
       score,
@@ -53,10 +109,10 @@ class LeaderboardService {
       createdAt: new Date().toISOString()
     });
     
-    writeScores(scores);
+    await writeScores(scores);
     
     const sorted = scores.sort((a, b) => b.score - a.score || a.timeUsed - b.timeUsed);
-    const rank = sorted.findIndex(s => s.userId === userId && s.score === score) + 1;
+    const rank = sorted.findIndex(s => s.id === recordId) + 1;
     
     const userScores = scores.filter(s => s.userId === userId);
     const highest = userScores.length > 0 ? Math.max(...userScores.map(s => s.score)) : 0;
@@ -65,8 +121,8 @@ class LeaderboardService {
     return { rank, isRecord };
   }
   
-  getLeaderboard(type = 'weekly', limit = 10) {
-    const scores = readScores();
+  async getLeaderboard(type = 'weekly', limit = 10) {
+    const scores = await readScores();
     const now = new Date();
     
     let filtered = scores;
@@ -91,14 +147,14 @@ class LeaderboardService {
     }));
   }
   
-  getUserRank(targetScore) {
-    const scores = readScores();
+  async getUserRank(targetScore) {
+    const scores = await readScores();
     const higher = scores.filter(s => s.score > targetScore).length;
     return higher + 1;
   }
   
-  getUserHighestScore(userId) {
-    const scores = readScores();
+  async getUserHighestScore(userId) {
+    const scores = await readScores();
     const userScores = scores.filter(s => s.userId === userId);
     if (userScores.length === 0) return 0;
     return Math.max(...userScores.map(s => s.score));
@@ -106,8 +162,8 @@ class LeaderboardService {
 }
 
 class StatsService {
-  recordGame(userId, score, correctRate, timeUsed, completed = true) {
-    const stats = readStats();
+  async recordGame(userId, score, correctRate, timeUsed, completed = true) {
+    const stats = await readStats();
     
     stats.totalGames++;
     stats.records.push({
@@ -119,12 +175,12 @@ class StatsService {
       createdAt: new Date().toISOString()
     });
     
-    writeStats(stats);
+    await writeStats(stats);
   }
   
-  getOverview() {
-    const stats = readStats();
-    const scores = readScores();
+  async getOverview() {
+    const stats = await readStats();
+    const scores = await readScores();
     
     const today = new Date().toDateString();
     const activeUsers = new Set(

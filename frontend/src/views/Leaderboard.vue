@@ -83,6 +83,7 @@ import { ref, watch, onMounted } from 'vue';
 import leaderboardApi from '@/api/leaderboard';
 import statsApi from '@/api/stats';
 import { useUserStore } from '@/stores/userStore';
+import { formatTime } from '@/utils';
 
 const userStore = useUserStore();
 
@@ -90,12 +91,6 @@ const activeTab = ref('weekly');
 const leaderboard = ref([]);
 const overview = ref(null);
 const loading = ref(false);
-
-function formatTime(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
 
 async function loadLeaderboard() {
   loading.value = true;

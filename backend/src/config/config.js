@@ -1,8 +1,16 @@
 const path = require('path');
 
+const env = process.env.NODE_ENV || 'development';
+
+const corsOrigins = {
+  development: '*',
+  production: process.env.CORS_ORIGIN || false,
+  test: '*'
+};
+
 module.exports = {
   port: process.env.PORT || 3000,
-  env: process.env.NODE_ENV || 'development',
+  env,
   
   db: {
     path: path.join(__dirname, '../../data/game.db')
@@ -10,12 +18,14 @@ module.exports = {
   
   rateLimit: {
     windowMs: 60 * 1000,
-    max: 100
+    max: env === 'production' ? 60 : 100
   },
   
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true
+    origin: corsOrigins[env] || corsOrigins.development,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   },
   
   game: {

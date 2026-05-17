@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import questionApi from '@/api/question';
 import leaderboardApi from '@/api/leaderboard';
 import statsApi from '@/api/stats';
+
+const GAME_STATE_KEY = 'logistics_game_state';
 
 export const useGameStore = defineStore('game', () => {
   const questions = ref([]);
@@ -13,6 +15,53 @@ export const useGameStore = defineStore('game', () => {
   const startTime = ref(null);
   const status = ref('waiting');
   const consecutiveCorrect = ref(0);
+  
+  function saveGameState() {
+    if (status.value === 'playing') {
+      const state = {
+        questions: questions.value,
+        currentIndex: currentIndex.value,
+        score: score.value,
+        correctCount: correctCount.value,
+        answers: answers.value,
+        startTime: startTime.value,
+        consecutiveCorrect: consecutiveCorrect.value,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(GAME_STATE_KEY, JSON.stringify(state));
+    }
+  }
+  
+  function loadGameState() {
+    const saved = localStorage.getItem(GAME_STATE_KEY);
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        if (state.timestamp && Date.now() - state.timestamp < 3600000) {
+          questions.value = state.questions;
+          currentIndex.value = state.currentIndex;
+          score.value = state.score;
+          correctCount.value = state.correctCount;
+          answers.value = state.answers;
+          startTime.value = state.startTime;
+          consecutiveCorrect.value = state.consecutiveCorrect;
+          status.value = 'playing';
+          return true;
+        }
+      } catch (error) {
+        console.error('加载游戏状态失败:', error);
+      }
+    }
+    return false;
+  }
+  
+  function clearGameState() {
+    localStorage.removeItem(GAME_STATE_KEY);
+  }
+  
+  watch([currentIndex, score, correctCount, answers], () => {
+    saveGameState();
+  }, { deep: true });
   
   const currentQuestion = computed(() => {
     if (questions.value.length === 0 || currentIndex.value >= questions.value.length) {
@@ -27,8 +76,9 @@ export const useGameStore = defineStore('game', () => {
   });
   
   const correctRate = computed(() => {
-    if (currentIndex.value === 0) return 0;
-    return correctCount.value / currentIndex.value;
+    const answeredCount = answers.value.length;
+    if (answeredCount === 0) return 0;
+    return correctCount.value / answeredCount;
   });
   
   const timeUsed = computed(() => {
@@ -48,9 +98,11 @@ export const useGameStore = defineStore('game', () => {
       consecutiveCorrect.value = 0;
       startTime.value = Date.now();
       status.value = 'playing';
+      saveGameState();
     } catch (error) {
       console.error('开始游戏失败:', error);
       status.value = 'error';
+      throw error;
     }
   }
   
@@ -98,6 +150,7 @@ export const useGameStore = defineStore('game', () => {
   
   async function endGame() {
     status.value = 'finished';
+    clearGameState();
   }
   
   function resetGame() {
@@ -109,6 +162,7 @@ export const useGameStore = defineStore('game', () => {
     startTime.value = null;
     status.value = 'waiting';
     consecutiveCorrect.value = 0;
+    clearGameState();
   }
   
   return {
@@ -128,6 +182,8 @@ export const useGameStore = defineStore('game', () => {
     answerQuestion,
     nextQuestion,
     endGame,
-    resetGame
+    resetGame,
+    loadGameState,
+    clearGameState
   };
 });

@@ -1,6 +1,12 @@
 @echo off
+chcp 65001 >nul
+setlocal
+
+set "ROOT_DIR=%~dp0"
+cd /d "%ROOT_DIR%"
+
 echo ========================================
-echo 物流声音猜题游戏 - 启动脚本
+echo 物流之声 - 启动脚本
 echo ========================================
 echo.
 
@@ -15,7 +21,7 @@ echo Node.js已安装
 
 echo.
 echo [2/4] 安装后端依赖...
-cd backend
+cd /d "%ROOT_DIR%backend"
 if not exist node_modules (
     call npm install
 )
@@ -23,19 +29,16 @@ echo 后端依赖已就绪
 
 echo.
 echo [3/4] 安装前端依赖...
-cd ..\frontend
+cd /d "%ROOT_DIR%frontend"
 if not exist node_modules (
     call npm install
 )
 echo 前端依赖已就绪
 
 echo.
-echo [4/4] 初始化数据库...
-cd ..\backend
-if not exist data\game.db (
-    call npm run init-db
-)
-echo 数据库已就绪
+echo [4/4] 检查数据目录...
+if not exist "%ROOT_DIR%backend\data" mkdir "%ROOT_DIR%backend\data"
+echo 数据目录已就绪
 
 echo.
 echo ========================================
@@ -48,9 +51,9 @@ echo.
 echo 按Ctrl+C停止服务
 echo.
 
-start "后端服务" cmd /k "cd backend && npm run dev"
+start "后端服务" cmd /k "cd /d "%ROOT_DIR%backend" && npm run dev"
 timeout /t 2 >nul
-start "前端服务" cmd /k "cd frontend && npm run dev"
+start "前端服务" cmd /k "cd /d "%ROOT_DIR%frontend" && npm run dev"
 
 echo.
 echo 服务已启动，请访问 http://localhost:5173

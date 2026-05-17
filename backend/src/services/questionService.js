@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const fisherYatesShuffle = require('../utils/fisherYatesShuffle');
 
 class QuestionService {
   constructor() {
@@ -24,13 +25,13 @@ class QuestionService {
       filtered = this.questions.filter(q => q.difficulty === difficulty);
     }
     
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+    const shuffled = fisherYatesShuffle(filtered);
     const selected = shuffled.slice(0, Math.min(count, shuffled.length));
     
     return selected.map(q => ({
       id: q.id,
       audioUrl: q.audio_url,
-      options: this.shuffleOptions(q.options),
+      options: fisherYatesShuffle(q.options),
       difficulty: q.difficulty,
       category: q.category
     }));
@@ -52,10 +53,6 @@ class QuestionService {
       difficulty: question.difficulty,
       category: question.category
     };
-  }
-  
-  shuffleOptions(options) {
-    return [...options].sort(() => Math.random() - 0.5);
   }
 }
 

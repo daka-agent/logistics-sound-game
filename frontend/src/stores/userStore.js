@@ -6,6 +6,17 @@ const USER_ID_KEY = 'logistics_game_user_id';
 const NICKNAME_KEY = 'logistics_game_nickname';
 const HIGHEST_KEY = 'logistics_game_highest';
 
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export const useUserStore = defineStore('user', () => {
   const userId = ref(localStorage.getItem(USER_ID_KEY) || '');
   const nickname = ref(localStorage.getItem(NICKNAME_KEY) || '');
@@ -13,7 +24,7 @@ export const useUserStore = defineStore('user', () => {
   const isFirstVisit = ref(!localStorage.getItem(USER_ID_KEY));
   
   function generateUserId() {
-    const id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const id = 'user_' + generateUUID();
     userId.value = id;
     localStorage.setItem(USER_ID_KEY, id);
     isFirstVisit.value = false;

@@ -1,7 +1,7 @@
-# 物流声音猜题游戏 - PowerShell启动脚本
+# 物流之声 - PowerShell启动脚本
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "物流声音猜题游戏 - 启动脚本" -ForegroundColor Cyan
+Write-Host "物流之声 - 启动脚本" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -44,19 +44,14 @@ if (-not (Test-Path "node_modules")) {
 }
 Write-Host "前端依赖已就绪" -ForegroundColor Green
 
-# 初始化数据库
+# 检查数据目录
 Write-Host ""
-Write-Host "[4/5] 初始化数据库..." -ForegroundColor Yellow
+Write-Host "[4/5] 检查数据目录..." -ForegroundColor Yellow
 Set-Location ..\backend
-if (-not (Test-Path "data\game.db")) {
-    npm run init-db
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "数据库初始化失败" -ForegroundColor Red
-        Read-Host "按回车键退出"
-        exit 1
-    }
+if (-not (Test-Path "data")) {
+    New-Item -ItemType Directory -Path "data" | Out-Null
 }
-Write-Host "数据库已就绪" -ForegroundColor Green
+Write-Host "数据目录已就绪" -ForegroundColor Green
 
 # 启动服务
 Write-Host ""

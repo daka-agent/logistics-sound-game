@@ -1,9 +1,12 @@
 const leaderboardService = require('../services/leaderboardService');
+const { sanitizeString } = require('../middleware/sanitize');
 
 class LeaderboardController {
   async submitScore(req, res) {
     try {
-      const { userId, nickname, score, correctRate, timeUsed } = req.body;
+      let { userId, nickname, score, correctRate, timeUsed } = req.body;
+      
+      nickname = sanitizeString(nickname);
       
       if (!userId || !nickname || score === undefined) {
         return res.status(400).json({
@@ -16,6 +19,27 @@ class LeaderboardController {
         return res.status(400).json({
           success: false,
           error: { code: 'NICKNAME_TOO_LONG', message: '昵称过长' }
+        });
+      }
+      
+      if (typeof score !== 'number' || score < 0 || score > 200) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_SCORE', message: '分数无效(0-200)' }
+        });
+      }
+      
+      if (typeof correctRate !== 'number' || correctRate < 0 || correctRate > 100) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_CORRECT_RATE', message: '正确率无效(0-100)' }
+        });
+      }
+      
+      if (typeof timeUsed !== 'number' || timeUsed < 0 || timeUsed > 3600) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_TIME', message: '用时无效(0-3600秒)' }
         });
       }
       

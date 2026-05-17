@@ -11,7 +11,7 @@
         </div>
       </div>
       
-      <h1 class="title">物流声音猜题</h1>
+      <h1 class="title">物流之声</h1>
       <p class="subtitle">听声音，猜物流，涨知识</p>
       
       <div class="intro" v-if="userStore.isFirstVisit">

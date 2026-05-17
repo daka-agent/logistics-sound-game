@@ -8,6 +8,7 @@ export const useAudioStore = defineStore('audio', () => {
   const isPlaying = ref(false);
   const isLoading = ref(false);
   const volume = ref(parseFloat(localStorage.getItem(VOLUME_KEY) || '0.8'));
+  let playLock = false;
   
   function initAudio() {
     if (!audio.value) {
@@ -24,6 +25,7 @@ export const useAudioStore = defineStore('audio', () => {
       
       audio.value.addEventListener('ended', () => {
         isPlaying.value = false;
+        playLock = false;
       });
       
       audio.value.addEventListener('loadstart', () => {
@@ -38,9 +40,16 @@ export const useAudioStore = defineStore('audio', () => {
   }
   
   async function play(url) {
+    if (playLock) {
+      return;
+    }
+    
+    playLock = true;
     const audioEl = initAudio();
     
     try {
+      audioEl.pause();
+      audioEl.currentTime = 0;
       isLoading.value = true;
       audioEl.src = url;
       audioEl.load();
@@ -48,6 +57,7 @@ export const useAudioStore = defineStore('audio', () => {
     } catch (error) {
       console.error('音频播放失败:', error);
       isLoading.value = false;
+      playLock = false;
       throw error;
     }
   }
@@ -55,6 +65,7 @@ export const useAudioStore = defineStore('audio', () => {
   function pause() {
     if (audio.value) {
       audio.value.pause();
+      playLock = false;
     }
   }
   
@@ -83,6 +94,10 @@ export const useAudioStore = defineStore('audio', () => {
     preloadAudio.load();
   }
   
+  function unlock() {
+    playLock = false;
+  }
+  
   return {
     audio,
     isPlaying,
@@ -93,6 +108,7 @@ export const useAudioStore = defineStore('audio', () => {
     pause,
     replay,
     setVolume,
-    preload
+    preload,
+    unlock
   };
 });

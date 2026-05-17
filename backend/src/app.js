@@ -4,6 +4,8 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const config = require('./config/config');
+const { errorHandler } = require('./middleware/errorHandler');
+const { sanitizeMiddleware } = require('./middleware/sanitize');
 
 const questionRoutes = require('./routes/questionRoutes');
 const leaderboardRoutes = require('./routes/leaderboardRoutes');
@@ -14,6 +16,7 @@ const app = express();
 app.use(cors(config.cors));
 app.use(compression());
 app.use(express.json());
+app.use(sanitizeMiddleware);
 
 app.use('/sounds', express.static(path.join(__dirname, '../public/sounds')));
 
@@ -35,17 +38,11 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, message: '服务正常' });
 });
 
-app.use((err, req, res, next) => {
-  console.error('错误:', err);
-  res.status(500).json({
-    success: false,
-    error: { code: 'INTERNAL_ERROR', message: '服务器内部错误' }
-  });
-});
+app.use(errorHandler);
 
 const PORT = config.port;
 app.listen(PORT, () => {
-  console.log(`物流声音猜题游戏API服务已启动`);
+  console.log(`物流之声API服务已启动`);
   console.log(`端口: ${PORT}`);
   console.log(`环境: ${config.env}`);
 });

@@ -20,15 +20,30 @@
           </div>
         </div>
         
-        <button class="play-btn" @click="playCurrentAudio" :disabled="audioStore.isLoading">
-          <span v-if="audioStore.isLoading">加载中...</span>
-          <span v-else-if="audioStore.isPlaying">播放中</span>
-          <span v-else>🔊 播放声音</span>
-        </button>
-        
-        <button class="replay-btn" @click="audioStore.replay" :disabled="!audioStore.isPlaying && !hasPlayed">
-          🔄 重播
-        </button>
+        <div class="audio-controls">
+          <button class="play-btn" @click="playCurrentAudio" :disabled="audioStore.isLoading">
+            <span v-if="audioStore.isLoading">加载中...</span>
+            <span v-else-if="audioStore.isPlaying">播放中</span>
+            <span v-else>🔊 播放声音</span>
+          </button>
+          
+          <button class="replay-btn" @click="audioStore.replay" :disabled="!audioStore.isPlaying && !hasPlayed">
+            🔄 重播
+          </button>
+          
+          <div class="volume-control">
+            <span class="volume-icon">🔈</span>
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.1" 
+              :value="audioStore.volume"
+              @input="audioStore.setVolume(parseFloat($event.target.value))"
+              class="volume-slider"
+            />
+          </div>
+        </div>
       </div>
       
       <div class="options-section">
@@ -75,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '@/stores/gameStore';
 import { useAudioStore } from '@/stores/audioStore';
@@ -86,6 +101,7 @@ const router = useRouter();
 const gameStore = useGameStore();
 const audioStore = useAudioStore();
 const userStore = useUserStore();
+const toast = inject('toast');
 
 const isAnswered = ref(false);
 const hasPlayed = ref(false);
@@ -99,7 +115,12 @@ async function playCurrentAudio() {
     await audioStore.play(gameStore.currentQuestion.audioUrl);
     hasPlayed.value = true;
   } catch (error) {
-    alert('音频加载失败，请检查网络连接');
+    const errorMsg = error.name === 'NotAllowedError' 
+      ? '音频播放被阻止，请点击页面后重试'
+      : error.name === 'NotSupportedError'
+      ? '音频格式不支持'
+      : '音频加载失败，请检查网络连接';
+    toast.value?.error(errorMsg);
   }
 }
 
@@ -160,7 +181,14 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeydown);
   
   if (gameStore.status === 'waiting' || gameStore.questions.length === 0) {
-    await gameStore.startGame();
+    const loaded = gameStore.loadGameState();
+    if (!loaded) {
+      try {
+        await gameStore.startGame();
+      } catch (error) {
+        toast.value?.error('加载题目失败，请刷新页面重试');
+      }
+    }
   }
   
   if (gameStore.status === 'playing') {
@@ -275,13 +303,20 @@ onUnmounted(() => {
   to { height: 60px; }
 }
 
+.audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .play-btn, .replay-btn {
   padding: 12px 30px;
   font-size: 16px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin: 0 10px;
   transition: all 0.3s;
 }
 
@@ -297,6 +332,26 @@ onUnmounted(() => {
 .replay-btn {
   background: #f5f7fa;
   color: #666;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.volume-icon {
+  font-size: 16px;
+}
+
+.volume-slider {
+  width: 80px;
+  height: 4px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
 }
 
 .replay-btn:hover:not(:disabled) {

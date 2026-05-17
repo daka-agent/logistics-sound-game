@@ -1,4 +1,4 @@
-# 🎮 物流声音猜题游戏
+# 🎮 物流之声
 
 一个有趣的Web游戏，通过听物流相关的声音来猜测场景，在娱乐中学习物流知识。
 
@@ -114,7 +114,7 @@ logistics-sound-game/
 
 - **Node.js** - JavaScript运行时
 - **Express** - Web应用框架
-- **better-sqlite3** - SQLite数据库
+- **JSON文件存储** - 轻量级数据持久化方案
 
 ## 📝 音频素材
 
