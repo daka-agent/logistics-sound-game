@@ -4,7 +4,7 @@ import path from 'path';
 
 export default defineConfig(({ mode }) => ({
   plugins: [vue()],
-  base: '/',
+  base: mode === 'production' ? '/logistics-sound-game/' : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src')
