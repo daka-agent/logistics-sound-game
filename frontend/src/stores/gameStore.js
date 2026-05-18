@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import questionApi from '@/api/question';
 import leaderboardApi from '@/api/leaderboard';
 import statsApi from '@/api/stats';
+import questionsData from '@/data/questions.json';
 
 const GAME_STATE_KEY = 'logistics_game_state';
 
@@ -89,8 +90,16 @@ export const useGameStore = defineStore('game', () => {
   async function startGame() {
     try {
       status.value = 'loading';
-      const res = await questionApi.getQuestions(10);
-      questions.value = res.data.questions;
+      const shuffled = [...questionsData].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, 10);
+      questions.value = selected.map(q => ({
+        id: q.id,
+        audioUrl: q.audio_url,
+        correctAnswer: q.correct_answer,
+        options: q.options,
+        description: q.description,
+        scene: q.scene
+      }));
       currentIndex.value = 0;
       score.value = 0;
       correctCount.value = 0;
@@ -110,8 +119,7 @@ export const useGameStore = defineStore('game', () => {
     if (!currentQuestion.value) return;
     
     const questionId = currentQuestion.value.id;
-    const res = await questionApi.getQuestionById(questionId);
-    const correctAnswer = res.data.correctAnswer;
+    const correctAnswer = currentQuestion.value.correctAnswer;
     const isCorrect = selectedOption === correctAnswer;
     
     if (isCorrect) {
@@ -128,15 +136,15 @@ export const useGameStore = defineStore('game', () => {
       selectedOption,
       correctAnswer,
       isCorrect,
-      description: res.data.description,
-      scene: res.data.scene
+      description: currentQuestion.value.description,
+      scene: currentQuestion.value.scene
     });
     
     return {
       isCorrect,
       correctAnswer,
-      description: res.data.description,
-      scene: res.data.scene
+      description: currentQuestion.value.description,
+      scene: currentQuestion.value.scene
     };
   }
   
