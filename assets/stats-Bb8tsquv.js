@@ -1,1 +1,0 @@
-import{a as t}from"./userStore-BU3-btxv.js";const p={recordGame(e,r,s,a,o=!0){return t.post("/stats",{userId:e,score:r,correctRate:s,timeUsed:a,completed:o})},getOverview(){return t.get("/stats/overview")}};export{p as s};
